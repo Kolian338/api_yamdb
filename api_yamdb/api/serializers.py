@@ -5,6 +5,18 @@ from rest_framework import serializers
 from reviews.models import User
 
 
+class TitlesSerializer(serializers.ModelSerializer):
+    pass
+
+
+class CategoriesSerializer(serializers.ModelSerializer):
+    pass
+
+
+class GenresSerializer(serializers.ModelSerializer):
+    pass 
+
+
 class SignupSerializer(serializers.Serializer):
     username = serializers.CharField(
         max_length=150,
@@ -31,3 +43,4 @@ class SignupSerializer(serializers.Serializer):
             )
 
         return value
+ 
