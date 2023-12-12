@@ -15,11 +15,11 @@ class SignupAPIView(APIView):
     def post(self, request):
         serializer = SignupSerializer(data=request.data)
         if serializer.is_valid():
-            #serializer.save()
+            email = serializer.validated_data.get('email')
             code = get_object_or_404(
-                User, username=serializer.validated_data.get('username')
+                User, username=serializer.validated_data.get('username'),
+                email=email
             ).password
-            emails = list(serializer.validated_data.get('email'))
-            send_code_to_email(code, emails)
+            send_code_to_email(code, list(email))
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
