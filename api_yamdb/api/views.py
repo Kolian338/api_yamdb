@@ -1,14 +1,20 @@
-from django.shortcuts import render
-from rest_framework import viewsets, mixins, filters
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status, viewsets, mixins, filters
+from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .serializers import (TitlesSerializer,
-                          CategoriesSerializer,
-                          GenresSerializer)
+from api.serializers import (TitlesSerializer,
+                             CategoriesSerializer,
+                             GenresSerializer,
+                             SignupSerializer)
+from api.utils import send_code_to_email
 from reviews.models import (Titles,
                             Categories,
-                            Genres)
-from .permissions import IsAdminOrReadOnly
+                            Genres,
+                            User)
+from api.permissions import IsAdminOrReadOnly
 
 
 class BaseViewSetFromGenresCategories(mixins.ListModelMixin,
@@ -36,3 +42,19 @@ class CategoriesViewSet(BaseViewSetFromGenresCategories):
 class GenresVieewSet(BaseViewSetFromGenresCategories):
     queryset = Genres.objects.all()
     serializer_class = GenresSerializer
+
+
+class SignupAPIView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        serializer = SignupSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data.get('email')
+            code = get_object_or_404(
+                User, username=serializer.validated_data.get('username'),
+                email=email
+            ).password
+            send_code_to_email(code, list(email))
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
