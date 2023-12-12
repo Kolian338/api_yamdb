@@ -1,11 +1,10 @@
-from django.shortcuts import render
 from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from api.serializers import SignupSerializer
-from api.utils import send_mail, send_code_to_email
+from api.utils import send_code_to_email
 from reviews.models import User
 
 
