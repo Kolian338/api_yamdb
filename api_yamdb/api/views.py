@@ -8,8 +8,10 @@ from rest_framework.views import APIView
 from api.serializers import (TitlesSerializer,
                              CategoriesSerializer,
                              GenresSerializer,
-                             SignupSerializer)
-from api.utils import send_code_to_email
+                             SignupSerializer,
+                             TokenSerializer,
+                             )
+from api.utils import send_code_to_email, get_tokens_for_user
 from reviews.models import (Titles,
                             Categories,
                             Genres,
@@ -50,11 +52,23 @@ class SignupAPIView(APIView):
     def post(self, request):
         serializer = SignupSerializer(data=request.data)
         if serializer.is_valid():
-            email = serializer.validated_data.get('email')
-            code = get_object_or_404(
-                User, username=serializer.validated_data.get('username'),
-                email=email
-            ).password
-            send_code_to_email(code, list(email))
             return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TokenAPIView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        serializer = TokenSerializer(data=request.data)
+        if serializer.is_valid():
+            confirmation_code = serializer.validated_data.get('password')
+            token = get_tokens_for_user(
+                get_object_or_404(
+                    User, username=serializer.validated_data.get('username'),
+                    password=confirmation_code
+                )
+            )
+            return Response({'token': token.get('access')},
+                            status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
