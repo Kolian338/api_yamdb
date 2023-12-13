@@ -13,7 +13,7 @@ class User(AbstractUser):
     bio = models.TextField('Биография', blank=True)
     role = models.CharField(
         'Роль',
-        max_length=20, choices=CHOICES, default=CHOICES[2]
+        max_length=20, choices=CHOICES, default=CHOICES[2][0]
     )
 
 

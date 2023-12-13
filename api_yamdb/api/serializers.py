@@ -4,7 +4,7 @@ from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
 
 from api.utils import send_code_to_email, get_tokens_for_user
-from reviews.models import User
+from reviews.models import User, CHOICES
 
 
 class TitlesSerializer(serializers.ModelSerializer):
@@ -102,3 +102,18 @@ class TokenSerializer(serializers.Serializer):
         if data.get('password') != self.get_user(username).password:
             raise serializers.ValidationError('Не верный код!')
         return data
+
+
+class UserSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для пользователей.
+    """
+
+    username = serializers.RegexField(max_length=150, regex=r"^[\w.@+-]+$")
+
+    class Meta:
+        model = User
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role',
+        )
+        read_only_fields = ('password',)

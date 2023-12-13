@@ -8,7 +8,7 @@ from api.serializers import (TitlesSerializer,
                              CategoriesSerializer,
                              GenresSerializer,
                              SignupSerializer,
-                             TokenSerializer,
+                             TokenSerializer, UserSerializer,
                              )
 from reviews.models import (Titles,
                             Categories,
@@ -63,3 +63,12 @@ class TokenAPIView(APIView):
         if serializer.is_valid():
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    """
+    Вьюсет для пользователя.
+    """
+
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
