@@ -7,7 +7,9 @@ from api.views import (
     CategoriesViewSet,
     GenresVieewSet,
     ReviewViewSet,
-    CommentViewSet
+    CommentViewSet,
+    TokenAPIView,
+    UserViewSet
 )
 
 app_name = 'api'
@@ -25,8 +27,10 @@ router_v1.register(
 router_v1.register(r'titles', TitlesViewSet)
 router_v1.register(r'categories', CategoriesViewSet)
 router_v1.register(r'genres', GenresVieewSet)
+router_v1.register(r'users', UserViewSet, basename='users')
 
 urlpatterns = [
     path('v1/auth/signup/', SignupAPIView.as_view()),
+    path('v1/auth/token/', TokenAPIView.as_view()),
     path('v1/', include(router_v1.urls)),
 ]
