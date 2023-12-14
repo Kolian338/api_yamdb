@@ -1,6 +1,7 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets, mixins, filters
-from rest_framework.permissions import AllowAny
+from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -72,3 +73,25 @@ class UserViewSet(viewsets.ModelViewSet):
 
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    #permission_classes = (IsAdminOrReadOnly,)
+
+    @action(
+        methods=['get', 'patch'], detail=False,
+        permission_classes=(IsAuthenticated,),
+        url_path='me',
+    )
+    def me(self, request):
+        """Создает маршрут /me и действие для него."""
+        if request.method == 'PATCH':
+            serializer = UserSerializer(
+                request.user, data=request.data, partial=True
+            )
+            if serializer.is_valid():
+                serializer.save(role=serializer.instance.role)
+                return Response(
+                    serializer.data, status=status.HTTP_200_OK)
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data)

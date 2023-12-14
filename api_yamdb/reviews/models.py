@@ -10,11 +10,14 @@ CHOICES = (
 
 class User(AbstractUser):
     email = models.EmailField('Почта', unique=True, max_length=254)
-    bio = models.TextField('Биография', blank=True)
+    bio = models.TextField('Биография', blank=True, null=True)
     role = models.CharField(
         'Роль',
         max_length=20, choices=CHOICES, default=CHOICES[2][0]
     )
+
+    def __str__(self):
+        return self.username
 
 
 class Categories(models.Model):

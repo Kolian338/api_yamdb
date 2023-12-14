@@ -88,11 +88,6 @@ class TokenSerializer(serializers.Serializer):
     def get_user(self, username):
         return get_object_or_404(User, username=username)
 
-    def to_representation(self, value):
-        return {
-            'token': self.get_token(value).get('access')
-        }
-
     def validate(self, data):
         """
         Если переданный код(пароль) неверный выбрасывается ошибка валидации.
@@ -103,13 +98,20 @@ class TokenSerializer(serializers.Serializer):
             raise serializers.ValidationError('Не верный код!')
         return data
 
+    def to_representation(self, value):
+        return {
+            'token': self.get_token(value).get('access')
+        }
+
 
 class UserSerializer(serializers.ModelSerializer):
     """
     Сериализатор для пользователей.
     """
 
-    username = serializers.RegexField(max_length=150, regex=r"^[\w.@+-]+$")
+    username = serializers.RegexField(
+        max_length=150, regex=r"^[\w.@+-]+$", required=True
+    )
 
     class Meta:
         model = User
