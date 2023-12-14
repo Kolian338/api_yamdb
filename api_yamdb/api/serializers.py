@@ -1,5 +1,4 @@
 import random
-import re
 
 from statistics import mean
 
@@ -13,6 +12,7 @@ from reviews.models import (User,
                             Categories,
                             Genres,
                             Titles)
+
 
 class AuthorMixin(metaclass=serializers.SerializerMetaclass):
     author = serializers.SlugRelatedField(
