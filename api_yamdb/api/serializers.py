@@ -15,16 +15,38 @@ class AuthorMixin(metaclass=serializers.SerializerMetaclass):
     )
 
 
+class GenresSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Genres
+        fields = ('name', 'slug')
+
+
 class TitlesSerializer(serializers.ModelSerializer):
-    pass
+    raiting = serializers.SerializerMethodField(read_only=True)
+    genre = GenresSerializer(read_only=True, many=True)
+    year = serializers.DateField(input_formats=('%Y'))
+
+    def get_raiting(self, obj):
+        list_raiting = obj.reviews.all().values_list('score', flat=True)
+        return round(mean(list_raiting), 0)
+
+    class Meta:
+        model = Titles
+        fields = ('id',
+                  'name',
+                  'year',
+                  'raiting',
+                  'description',
+                  'genre',
+                  'category')
 
 
 class CategoriesSerializer(serializers.ModelSerializer):
-    pass
 
-
-class GenresSerializer(serializers.ModelSerializer):
-    pass
+    class Meta:
+        model = Categories
+        fields = ('name', 'slug')
 
 
 class SignupSerializer(serializers.Serializer):
