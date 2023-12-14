@@ -33,6 +33,7 @@ class BaseViewSetFromGenresCategories(mixins.ListModelMixin,
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
+    pagination_class = PageNumberPagination
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
@@ -41,6 +42,7 @@ class TitlesViewSet(viewsets.ModelViewSet):
     serializer_class = TitlesSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('category__slug', 'genre__slug', 'name', 'year')
+    pagination_class = PageNumberPagination
 
 
 class CategoriesViewSet(BaseViewSetFromGenresCategories):
@@ -48,7 +50,7 @@ class CategoriesViewSet(BaseViewSetFromGenresCategories):
     serializer_class = CategoriesSerializer
 
 
-class GenresVieewSet(BaseViewSetFromGenresCategories):
+class GenresViewSet(BaseViewSetFromGenresCategories):
     queryset = Genres.objects.all()
     serializer_class = GenresSerializer
 
