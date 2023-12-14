@@ -2,7 +2,15 @@ import re
 
 from rest_framework import serializers
 
-from reviews.models import User
+from reviews.models import User, Reviews, Comments
+
+
+class AuthorMixin(metaclass=serializers.SerializerMetaclass):
+    author = serializers.SlugRelatedField(
+        read_only=True,
+        default=serializers.CurrentUserDefault(),
+        slug_field='username'
+    )
 
 
 class TitlesSerializer(serializers.ModelSerializer):
@@ -14,7 +22,7 @@ class CategoriesSerializer(serializers.ModelSerializer):
 
 
 class GenresSerializer(serializers.ModelSerializer):
-    pass 
+    pass
 
 
 class SignupSerializer(serializers.Serializer):
@@ -43,4 +51,32 @@ class SignupSerializer(serializers.Serializer):
             )
 
         return value
- 
+
+
+class ReviewSerializer(AuthorMixin, serializers.ModelSerializer):
+
+    class Meta:
+        fields = '__all__'
+        model = Reviews
+        read_only_fields = ('title', 'pub_date', 'id')
+        validators = [
+            serializers.UniqueTogetherValidator(
+                queryset=Reviews.objects.all(),
+                fields=('title', 'user')
+            )
+        ]
+
+    def validate_score(self, value):
+        if 0 > value > 10:
+            return serializers.ValidationError(
+                'Enter number between 0 and 10.'
+            )
+        return value
+
+
+class CommentSerializer(AuthorMixin, serializers.ModelSerializer):
+
+    class Meta:
+        fields = '__all__'
+        model = Comments
+        read_only_fields = ('review', 'pub_date', 'id')
