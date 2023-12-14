@@ -4,7 +4,15 @@ from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
 
 from api.utils import send_code_to_email, get_tokens_for_user
-from reviews.models import User, CHOICES
+from reviews.models import User, Reviews, Comments
+
+
+class AuthorMixin(metaclass=serializers.SerializerMetaclass):
+    author = serializers.SlugRelatedField(
+        read_only=True,
+        default=serializers.CurrentUserDefault(),
+        slug_field='username'
+    )
 
 
 class TitlesSerializer(serializers.ModelSerializer):
@@ -119,3 +127,32 @@ class UserSerializer(serializers.ModelSerializer):
             'username', 'email', 'first_name', 'last_name', 'bio', 'role',
         )
         read_only_fields = ('password',)
+
+
+class ReviewSerializer(AuthorMixin, serializers.ModelSerializer):
+
+    class Meta:
+        fields = '__all__'
+        model = Reviews
+        read_only_fields = ('title', 'pub_date', 'id')
+        validators = [
+            serializers.UniqueTogetherValidator(
+                queryset=Reviews.objects.all(),
+                fields=('title', 'user')
+            )
+        ]
+
+    def validate_score(self, value):
+        if 0 > value > 10:
+            return serializers.ValidationError(
+                'Enter number between 0 and 10.'
+            )
+        return value
+
+
+class CommentSerializer(AuthorMixin, serializers.ModelSerializer):
+
+    class Meta:
+        fields = '__all__'
+        model = Comments
+        read_only_fields = ('review', 'pub_date', 'id')
