@@ -4,8 +4,12 @@ from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
 
 from api.utils import send_code_to_email, get_tokens_for_user
-from reviews.models import User, Reviews, Comments
-
+from reviews.models import (User,
+                            Reviews,
+                            Comments,
+                            Categories,
+                            Genres,
+                            Titles)
 
 class AuthorMixin(metaclass=serializers.SerializerMetaclass):
     author = serializers.SlugRelatedField(
