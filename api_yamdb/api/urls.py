@@ -5,7 +5,7 @@ from api.views import (
     SignupAPIView,
     TitlesViewSet,
     CategoriesViewSet,
-    GenresVieewSet,
+    GenresViewSet,
     ReviewViewSet,
     CommentViewSet,
     TokenAPIView,
@@ -26,7 +26,7 @@ router_v1.register(
 )
 router_v1.register(r'titles', TitlesViewSet)
 router_v1.register(r'categories', CategoriesViewSet)
-router_v1.register(r'genres', GenresVieewSet)
+router_v1.register(r'genres', GenresViewSet)
 router_v1.register(r'users', UserViewSet, basename='users')
 
 urlpatterns = [
