@@ -19,13 +19,12 @@ from api.serializers import (TitlesSerializer,
                              ReviewSerializer,
                              CommentSerializer
                              )
-from api.utils import send_code_to_email
 from reviews.models import (Titles,
                             Categories,
                             Genres,
                             User,
                             Reviews)
-from api.permissions import IsAdminOrReadOnly
+from api.permissions import IsAdminOrReadOnly, IsAdmin
 
 
 class BaseViewSetFromGenresCategories(mixins.ListModelMixin,
@@ -85,7 +84,11 @@ class UserViewSet(viewsets.ModelViewSet):
 
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    #permission_classes = (IsAdminOrReadOnly,)
+    lookup_field = 'username'
+    permission_classes = (IsAdmin,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('username',)
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     @action(
         methods=['get', 'patch'], detail=False,
