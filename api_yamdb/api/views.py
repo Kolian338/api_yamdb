@@ -49,11 +49,13 @@ class TitlesViewSet(viewsets.ModelViewSet):
 class CategoriesViewSet(BaseViewSetFromGenresCategories):
     queryset = Categories.objects.all()
     serializer_class = CategoriesSerializer
+    lookup_field = 'slug'
 
 
 class GenresViewSet(BaseViewSetFromGenresCategories):
     queryset = Genres.objects.all()
     serializer_class = GenresSerializer
+    lookup_field = 'slug'
 
 
 class SignupAPIView(APIView):
