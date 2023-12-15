@@ -24,7 +24,7 @@ from reviews.models import (Titles,
                             Genres,
                             User,
                             Reviews)
-from api.permissions import IsAdminOrReadOnly, IsAdmin
+from api.permissions import IsAdminOrReadOnly, IsAdminOrSuperUserDjango
 
 
 class BaseViewSetFromGenresCategories(mixins.ListModelMixin,
@@ -85,7 +85,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = 'username'
-    permission_classes = (IsAdmin,)
+    permission_classes = (IsAdminOrSuperUserDjango,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
     http_method_names = ['get', 'post', 'patch', 'delete']
