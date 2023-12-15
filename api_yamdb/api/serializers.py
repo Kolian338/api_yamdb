@@ -146,10 +146,6 @@ class UserSerializer(serializers.ModelSerializer):
     Сериализатор для пользователей.
     """
 
-    username = serializers.RegexField(
-        max_length=150, regex=r"^[\w.@+-]+$", required=True
-    )
-
     class Meta:
         model = User
         fields = (
