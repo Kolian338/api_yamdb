@@ -1,6 +1,6 @@
 import random
-
-from statistics import mean
+import datetime
+import statistics
 
 from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
@@ -29,14 +29,17 @@ class GenresSerializer(serializers.ModelSerializer):
         fields = ('name', 'slug')
 
 
+class CategoriesSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Categories
+        fields = ('name', 'slug')
+
+
 class TitlesSerializer(serializers.ModelSerializer):
     raiting = serializers.SerializerMethodField(read_only=True)
     genre = GenresSerializer(read_only=True, many=True)
-    year = serializers.DateField(input_formats=('%Y'))
-
-    def get_raiting(self, obj):
-        list_raiting = obj.reviews.all().values_list('score', flat=True)
-        return round(mean(list_raiting), 0)
+    category = CategoriesSerializer(read_only=True)
 
     class Meta:
         model = Titles
@@ -48,12 +51,20 @@ class TitlesSerializer(serializers.ModelSerializer):
                   'genre',
                   'category')
 
+    def validate_year(self, value):
+        current_year = datetime.datetime.now().year
+        if value > current_year:
+            raise serializers.ValidationError('Год выпуска произведения должен'
+                                              ' быть не больше текущего года')
+        return value
 
-class CategoriesSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Categories
-        fields = ('name', 'slug')
+    def get_raiting(self, obj):
+        list_raiting = obj.reviews.all().values_list('score', flat=True)
+        try:
+            raiting = statistics.mean(list_raiting)
+        except statistics.StatisticsError:
+            return 0
+        return round(raiting, 0)
 
 
 class SignupSerializer(serializers.Serializer):
