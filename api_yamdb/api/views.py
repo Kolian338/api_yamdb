@@ -23,7 +23,7 @@ from reviews.models import (Titles,
                             Categories,
                             Genres,
                             User,
-                            Reviews)
+                            Review)
 from api.permissions import IsAdminOrReadOnly, IsAdmin
 
 
@@ -116,14 +116,14 @@ class DestroyUpdateMixin:
     allowed_roles = ['moderator', 'admin']
 
     def perform_destroy(self, serializer):
-        if serializer.author != self.request.user or (
+        if serializer.author != self.request.user and (
             self.request.user.role not in self.allowed_roles
         ):
             raise PermissionDenied('Удаление чужого контента запрещено!')
         super().perform_destroy(serializer)
 
     def perform_update(self, serializer):
-        if serializer.instance.author != self.request.user or (
+        if serializer.instance.author != self.request.user and (
             self.request.user.role not in self.allowed_roles
         ):
             raise PermissionDenied('Изменение чужого контента запрещено!')
@@ -133,12 +133,13 @@ class DestroyUpdateMixin:
 class ReviewViewSet(DestroyUpdateMixin, viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    http_method_names = ['get', 'post', 'head', 'patch', 'delete']
 
     def get_title(self):
         return get_object_or_404(Titles, pk=self.kwargs.get('title_id'))
 
     def get_queryset(self):
-        return self.get_title().reviews.select_related('author')
+        return self.get_title().reviews.order_by('id')
 
     def perform_create(self, serializer):
         serializer.save(
@@ -151,12 +152,13 @@ class ReviewViewSet(DestroyUpdateMixin, viewsets.ModelViewSet):
 class CommentViewSet(DestroyUpdateMixin, viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    http_method_names = ['get', 'post', 'head', 'patch', 'delete']
 
     def get_review(self):
-        return get_object_or_404(Reviews, pk=self.kwargs.get('review_id'))
+        return get_object_or_404(Review, pk=self.kwargs.get('review_id'))
 
     def get_queryset(self):
-        return self.get_review().comments.select_related('author')
+        return self.get_review().comments.order_by('id')
 
     def perform_create(self, serializer):
         serializer.save(
