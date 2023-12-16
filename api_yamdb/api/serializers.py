@@ -179,9 +179,9 @@ class ReviewSerializer(AuthorMixin, serializers.ModelSerializer):
         )
         model = Review
         read_only_fields = ('pub_date', 'id', 'title',)
-    
+
     def validate(self, data):
-        if not self.context.get('request').method == 'POST':
+        if self.context.get('request').method != 'POST':
             return data
         author = self.context.get('request').user
         title_id = self.context.get('view').kwargs.get('title_id')
