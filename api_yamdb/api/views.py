@@ -25,7 +25,6 @@ from reviews.models import (Titles,
                             Genres,
                             User,
                             Review)
-from api.permissions import IsAdminOrReadOnly, IsAdmin
 
 
 class BaseViewSetFromGenresCategories(mixins.ListModelMixin,
