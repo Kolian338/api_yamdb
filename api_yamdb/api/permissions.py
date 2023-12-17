@@ -33,7 +33,9 @@ class IsModeratorOrAuthenticatedUser(BasePermission):
 class IsAdminOrReadOnly(BasePermission):
 
     def has_permission(self, request, view):
-        return request.user.is_superuser or request.method in SAFE_METHODS
+        return (request.method in SAFE_METHODS
+                or (request.auth
+                    and request.user.role == 'admin'))
 
 
 class IsAnonymous(BasePermission):

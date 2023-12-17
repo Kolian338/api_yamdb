@@ -1,13 +1,15 @@
 import random
-from statistics import mean
+import datetime
+import statistics
+
 
 from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
 
 from api.utils import send_code_to_email, get_tokens_for_user
 from reviews.models import (User,
-                            Reviews,
-                            Comments,
+                            Review,
+                            Comment,
                             Categories,
                             Genres,
                             Titles)
@@ -28,14 +30,17 @@ class GenresSerializer(serializers.ModelSerializer):
         fields = ('name', 'slug')
 
 
+class CategoriesSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Categories
+        fields = ('name', 'slug')
+
+
 class TitlesSerializer(serializers.ModelSerializer):
     raiting = serializers.SerializerMethodField(read_only=True)
     genre = GenresSerializer(read_only=True, many=True)
-    year = serializers.DateField(input_formats=('%Y'))
-
-    def get_raiting(self, obj):
-        list_raiting = obj.reviews.all().values_list('score', flat=True)
-        return round(mean(list_raiting), 0)
+    category = CategoriesSerializer(read_only=True)
 
     class Meta:
         model = Titles
@@ -47,12 +52,20 @@ class TitlesSerializer(serializers.ModelSerializer):
                   'genre',
                   'category')
 
+    def validate_year(self, value):
+        current_year = datetime.datetime.now().year
+        if value > current_year:
+            raise serializers.ValidationError('Год выпуска произведения должен'
+                                              ' быть не больше текущего года')
+        return value
 
-class CategoriesSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Categories
-        fields = ('name', 'slug')
+    def get_raiting(self, obj):
+        list_raiting = obj.reviews.all().values_list('score', flat=True)
+        try:
+            raiting = statistics.mean(list_raiting)
+        except statistics.StatisticsError:
+            return 0
+        return round(raiting, 0)
 
 
 class SignupSerializer(serializers.Serializer):
@@ -155,16 +168,29 @@ class UserSerializer(serializers.ModelSerializer):
 
 class ReviewSerializer(AuthorMixin, serializers.ModelSerializer):
 
+    author = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='username',
+        default=serializers.CurrentUserDefault()
+    )
+
     class Meta:
-        fields = '__all__'
-        model = Reviews
-        read_only_fields = ('title', 'pub_date', 'id')
-        validators = [
-            serializers.UniqueTogetherValidator(
-                queryset=Reviews.objects.all(),
-                fields=('title', 'user')
+        fields = (
+            'id', 'text', 'author', 'score', 'pub_date', 'title',
+        )
+        model = Review
+        read_only_fields = ('pub_date', 'id', 'title',)
+
+    def validate(self, data):
+        if self.context.get('request').method != 'POST':
+            return data
+        author = self.context.get('request').user
+        title_id = self.context.get('view').kwargs.get('title_id')
+        if Review.objects.filter(author=author, title=title_id).exists():
+            raise serializers.ValidationError(
+                'Repeated reviews are not allowed'
             )
-        ]
+        return data
 
     def validate_score(self, value):
         if 0 > value > 10:
@@ -178,5 +204,5 @@ class CommentSerializer(AuthorMixin, serializers.ModelSerializer):
 
     class Meta:
         fields = '__all__'
-        model = Comments
+        model = Comment
         read_only_fields = ('review', 'pub_date', 'id')
