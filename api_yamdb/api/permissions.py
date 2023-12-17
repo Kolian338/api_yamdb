@@ -12,22 +12,26 @@ class IsAdminOrSuperUser(BasePermission):
                 or request.user.is_superuser)
 
 
-class IsModeratorOrAuthenticatedUser(BasePermission):
+class IsAdminModeratorOrAuthenticatedUser(BasePermission):
     """
-    Роль user может все читать и редактировать/удалять только своё.
-    Роль moderator может делать всё.
+    Читать могут все.
+    Роль user может редактировать/удалять только своё.
+    Роль admin/moderator может делать всё.
     """
 
     def has_permission(self, request, view):
         return bool(
             request.method in SAFE_METHODS
-            or request.user.role in ('user', 'moderator')
+            or request.user.is_authenticated
         )
 
     def has_object_permission(self, request, view, obj):
-        if request.user.role == 'user':
-            return obj.author == request.user
-        return request.user.role == 'moderator'
+        return (
+                request.method in SAFE_METHODS
+                or obj.author == request.user
+                or request.user.role == 'moderator'
+                or request.user.role == 'admin'
+        )
 
 
 class IsAdminOrReadOnly(BasePermission):
