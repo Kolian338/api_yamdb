@@ -51,12 +51,28 @@ class TitlesSerializer(serializers.ModelSerializer):
                   'genre',
                   'category')
 
-    def validate_year(self, value):
+    # def validate_year(self, value):
+    #     if not isinstance(value, int):
+    #         raise serializers.ValidationError('!!!')
+    #     current_year = datetime.datetime.now().year
+    #     if value > current_year:
+    #         raise serializers.ValidationError('Год выпуска произведения должен'
+    #                                           ' быть не больше текущего года')
+    #     return value
+
+    def validate(self, data):
+        year = data.get('year')
+        name = data.get('name')
         current_year = datetime.datetime.now().year
-        if value > current_year:
+        if not isinstance(year, int):
+            raise serializers.ValidationError('!!!')
+        if year > current_year:
             raise serializers.ValidationError('Год выпуска произведения должен'
                                               ' быть не больше текущего года')
-        return value
+        if len(name) > 256:
+            raise serializers.ValidationError('Год выпуска произведения должен'
+                                              ' быть не больше текущего года')
+        return data
 
     def get_raiting(self, obj):
         list_raiting = obj.reviews.all().values_list('score', flat=True)

@@ -35,27 +35,36 @@ class BaseViewSetFromGenresCategories(mixins.ListModelMixin,
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     pagination_class = PageNumberPagination
+    lookup_field = 'slug'
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
-    queryset = Titles.objects.all()
     permission_classes = (IsAdminOrReadOnly,)
     serializer_class = TitlesSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('category__slug', 'genre__slug', 'name', 'year')
-    pagination_class = PageNumberPagination
+    http_method_names = ['get', 'post', 'path', 'delete']
+
+    def get_queryset(self):
+        title_id = self.kwargs.get('title_id')
+        return Titles.objects.filter(pk=title_id)
+    
+    def paginate_queryset(self, queryset):
+        if self.action == 'list':
+            self.pagination_class = PageNumberPagination
+        return super().paginate_queryset(queryset)
+
+    
 
 
 class CategoriesViewSet(BaseViewSetFromGenresCategories):
     queryset = Categories.objects.all()
     serializer_class = CategoriesSerializer
-    lookup_field = 'slug'
 
 
 class GenresViewSet(BaseViewSetFromGenresCategories):
     queryset = Genres.objects.all()
     serializer_class = GenresSerializer
-    lookup_field = 'slug'
 
 
 class SignupAPIView(APIView):
