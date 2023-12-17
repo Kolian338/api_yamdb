@@ -1,8 +1,7 @@
 import datetime as dt
 
-from django.core.exceptions import PermissionDenied
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status, viewsets, mixins, filters, permissions
+from rest_framework import status, viewsets, mixins, filters
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
@@ -10,7 +9,9 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.permissions import IsAdminOrReadOnly, IsAdminOrSuperUser
+from api.permissions import (
+    IsAdminOrReadOnly, IsAdminOrSuperUser, IsAdminModeratorOrAuthenticatedUser
+)
 from api.serializers import (TitlesSerializer,
                              CategoriesSerializer,
                              GenresSerializer,
@@ -112,27 +113,9 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class DestroyUpdateMixin:
-    allowed_roles = ['moderator', 'admin']
-
-    def perform_destroy(self, serializer):
-        if serializer.author != self.request.user and (
-            self.request.user.role not in self.allowed_roles
-        ):
-            raise PermissionDenied('Удаление чужого контента запрещено!')
-        super().perform_destroy(serializer)
-
-    def perform_update(self, serializer):
-        if serializer.instance.author != self.request.user and (
-            self.request.user.role not in self.allowed_roles
-        ):
-            raise PermissionDenied('Изменение чужого контента запрещено!')
-        super().perform_update(serializer)
-
-
-class ReviewViewSet(DestroyUpdateMixin, viewsets.ModelViewSet):
+class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAdminModeratorOrAuthenticatedUser,)
     http_method_names = ['get', 'post', 'head', 'patch', 'delete']
 
     def get_title(self):
@@ -149,9 +132,9 @@ class ReviewViewSet(DestroyUpdateMixin, viewsets.ModelViewSet):
         )
 
 
-class CommentViewSet(DestroyUpdateMixin, viewsets.ModelViewSet):
+class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAdminModeratorOrAuthenticatedUser,)
     http_method_names = ['get', 'post', 'head', 'patch', 'delete']
 
     def get_review(self):
