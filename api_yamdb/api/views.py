@@ -1,15 +1,16 @@
 import datetime as dt
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated
+
 from django.core.exceptions import PermissionDenied
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets, mixins, filters, permissions
+from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.pagination import PageNumberPagination
 
-
+from api.permissions import IsAdminOrReadOnly, IsAdminOrSuperUser
 from api.serializers import (TitlesSerializer,
                              CategoriesSerializer,
                              GenresSerializer,
@@ -85,7 +86,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = 'username'
-    permission_classes = (IsAdmin,)
+    permission_classes = (IsAdminOrSuperUser,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
     http_method_names = ['get', 'post', 'patch', 'delete']
