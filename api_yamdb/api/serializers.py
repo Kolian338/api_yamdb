@@ -1,5 +1,4 @@
 import random
-
 from statistics import mean
 
 from rest_framework import serializers
