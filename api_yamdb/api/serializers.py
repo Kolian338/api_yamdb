@@ -4,7 +4,6 @@ import statistics
 
 
 from rest_framework import serializers
-from rest_framework.fields import empty
 from rest_framework.generics import get_object_or_404
 
 from api.utils import send_code_to_email, get_tokens_for_user
@@ -234,13 +233,6 @@ class ReviewSerializer(AuthorMixin, serializers.ModelSerializer):
                 'Repeated reviews are not allowed'
             )
         return data
-
-    def validate_score(self, value):
-        if 0 > value > 10:
-            return serializers.ValidationError(
-                'Enter number between 0 and 10.'
-            )
-        return value
 
 
 class CommentSerializer(AuthorMixin, serializers.ModelSerializer):
