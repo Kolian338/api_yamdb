@@ -13,6 +13,7 @@ from api.permissions import (
     IsAdminOrReadOnly, IsAdminOrSuperUser, IsAdminModeratorOrAuthenticatedUser
 )
 from api.serializers import (TitlesSerializer,
+                             TitlesListSerializer,
                              CategoriesSerializer,
                              GenresSerializer,
                              SignupSerializer,
@@ -21,11 +22,12 @@ from api.serializers import (TitlesSerializer,
                              ReviewSerializer,
                              CommentSerializer
                              )
-from reviews.models import (Titles,
+from reviews.models import (Title,
                             Categories,
-                            Genres,
+                            Genre,
                             User,
                             Review)
+from api.filters import GanreFilter
 
 
 class BaseViewSetFromGenresCategories(mixins.ListModelMixin,
@@ -36,15 +38,23 @@ class BaseViewSetFromGenresCategories(mixins.ListModelMixin,
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     pagination_class = PageNumberPagination
+    lookup_field = 'slug'
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
-    queryset = Titles.objects.all()
+    queryset = Title.objects.all()
     permission_classes = (IsAdminOrReadOnly,)
     serializer_class = TitlesSerializer
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('category__slug', 'genre__slug', 'name', 'year')
     pagination_class = PageNumberPagination
+    filter_backends = (DjangoFilterBackend,)
+    filter_class = GanreFilter
+    filterset_fields = ('category__slug', 'name', 'year')
+    http_method_names = ['get', 'post', 'patch', 'delete']
+
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return TitlesListSerializer
+        return super().get_serializer_class()
 
 
 class CategoriesViewSet(BaseViewSetFromGenresCategories):
@@ -53,7 +63,7 @@ class CategoriesViewSet(BaseViewSetFromGenresCategories):
 
 
 class GenresViewSet(BaseViewSetFromGenresCategories):
-    queryset = Genres.objects.all()
+    queryset = Genre.objects.all()
     serializer_class = GenresSerializer
 
 
@@ -119,7 +129,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'head', 'patch', 'delete']
 
     def get_title(self):
-        return get_object_or_404(Titles, pk=self.kwargs.get('title_id'))
+        return get_object_or_404(Title, pk=self.kwargs.get('title_id'))
 
     def get_queryset(self):
         return self.get_title().reviews.order_by('id')
