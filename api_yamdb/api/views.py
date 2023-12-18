@@ -47,8 +47,8 @@ class TitlesViewSet(viewsets.ModelViewSet):
     serializer_class = TitlesSerializer
     pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend,)
-    filter_class = GanreFilter
-    filterset_fields = ('category__slug', 'name', 'year')
+    filterset_class = GanreFilter
+    filterset_fields = ('name', 'genre', 'year', 'category')
     http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_serializer_class(self):
