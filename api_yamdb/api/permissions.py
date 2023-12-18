@@ -6,7 +6,8 @@ class IsAdminOrReadOnly(BasePermission):
     def has_permission(self, request, view):
         return (request.method in SAFE_METHODS
                 or (request.auth
-                    and request.user.role == 'admin'))
+                    and (request.user.role == 'admin'
+                         or request.user.is_superuser)))
 
 
 class IsModerator(BasePermission):

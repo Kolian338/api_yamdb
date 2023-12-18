@@ -11,6 +11,7 @@ from rest_framework.pagination import PageNumberPagination
 
 
 from api.serializers import (TitlesSerializer,
+                             TitlesListSerializer,
                              CategoriesSerializer,
                              GenresSerializer,
                              SignupSerializer,
@@ -19,12 +20,13 @@ from api.serializers import (TitlesSerializer,
                              ReviewSerializer,
                              CommentSerializer
                              )
-from reviews.models import (Titles,
+from reviews.models import (Title,
                             Categories,
-                            Genres,
+                            Genre,
                             User,
-                            Reviews)
+                            Review)
 from api.permissions import IsAdminOrReadOnly, IsAdmin
+from api.filters import GanreFilter
 
 
 class BaseViewSetFromGenresCategories(mixins.ListModelMixin,
@@ -39,22 +41,19 @@ class BaseViewSetFromGenresCategories(mixins.ListModelMixin,
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
+    queryset = Title.objects.all()
     permission_classes = (IsAdminOrReadOnly,)
     serializer_class = TitlesSerializer
+    pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('category__slug', 'genre__slug', 'name', 'year')
-    http_method_names = ['get', 'post', 'path', 'delete']
+    filter_class = GanreFilter
+    filterset_fields = ('category__slug', 'name', 'year')
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
-    def get_queryset(self):
-        title_id = self.kwargs.get('title_id')
-        return Titles.objects.filter(pk=title_id)
-    
-    def paginate_queryset(self, queryset):
-        if self.action == 'list':
-            self.pagination_class = PageNumberPagination
-        return super().paginate_queryset(queryset)
-
-    
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return TitlesListSerializer
+        return super().get_serializer_class()
 
 
 class CategoriesViewSet(BaseViewSetFromGenresCategories):
@@ -63,7 +62,7 @@ class CategoriesViewSet(BaseViewSetFromGenresCategories):
 
 
 class GenresViewSet(BaseViewSetFromGenresCategories):
-    queryset = Genres.objects.all()
+    queryset = Genre.objects.all()
     serializer_class = GenresSerializer
 
 
@@ -127,14 +126,14 @@ class DestroyUpdateMixin:
     allowed_roles = ['moderator', 'admin']
 
     def perform_destroy(self, serializer):
-        if serializer.author != self.request.user or (
+        if serializer.author != self.request.user and (
             self.request.user.role not in self.allowed_roles
         ):
             raise PermissionDenied('Удаление чужого контента запрещено!')
         super().perform_destroy(serializer)
 
     def perform_update(self, serializer):
-        if serializer.instance.author != self.request.user or (
+        if serializer.instance.author != self.request.user and (
             self.request.user.role not in self.allowed_roles
         ):
             raise PermissionDenied('Изменение чужого контента запрещено!')
@@ -144,12 +143,13 @@ class DestroyUpdateMixin:
 class ReviewViewSet(DestroyUpdateMixin, viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    http_method_names = ['get', 'post', 'head', 'patch', 'delete']
 
     def get_title(self):
-        return get_object_or_404(Titles, pk=self.kwargs.get('title_id'))
+        return get_object_or_404(Title, pk=self.kwargs.get('title_id'))
 
     def get_queryset(self):
-        return self.get_title().reviews.select_related('author')
+        return self.get_title().reviews.order_by('id')
 
     def perform_create(self, serializer):
         serializer.save(
@@ -162,12 +162,13 @@ class ReviewViewSet(DestroyUpdateMixin, viewsets.ModelViewSet):
 class CommentViewSet(DestroyUpdateMixin, viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    http_method_names = ['get', 'post', 'head', 'patch', 'delete']
 
     def get_review(self):
-        return get_object_or_404(Reviews, pk=self.kwargs.get('review_id'))
+        return get_object_or_404(Review, pk=self.kwargs.get('review_id'))
 
     def get_queryset(self):
-        return self.get_review().comments.select_related('author')
+        return self.get_review().comments.order_by('id')
 
     def perform_create(self, serializer):
         serializer.save(

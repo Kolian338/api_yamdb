@@ -28,7 +28,7 @@ class Categories(models.Model):
         return self.name
 
 
-class Genres(models.Model):
+class Genre(models.Model):
     name = models.CharField(max_length=256)
     slug = models.SlugField(max_length=50, unique=True)
 
@@ -36,7 +36,7 @@ class Genres(models.Model):
         return self.name
 
 
-class Titles(models.Model):
+class Title(models.Model):
     name = models.CharField(max_length=256)
     description = models.TextField(blank=True)
     year = models.PositiveSmallIntegerField()
@@ -46,25 +46,25 @@ class Titles(models.Model):
                                  null=True,
                                  blank=True)
 
-    genre = models.ManyToManyField(Genres, through='GenreTitles')
+    genre = models.ManyToManyField(Genre, through='GenreTitles')
 
     def __str__(self):
         return self.name
 
 
 class GenreTitles(models.Model):
-    genre = models.ForeignKey(Genres, on_delete=models.CASCADE)
-    title = models.ForeignKey(Titles, on_delete=models.CASCADE)
+    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
+    title = models.ForeignKey(Title, on_delete=models.CASCADE)
 
     def __str__(self):
         return f'{self.title} {self.genre}'
 
 
-class Reviews(models.Model):
+class Review(models.Model):
     author = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='reviews')
     title = models.ForeignKey(
-        Titles, on_delete=models.CASCADE, related_name='reviews')
+        Title, on_delete=models.CASCADE, related_name='reviews')
     text = models.TextField()
     score = models.IntegerField()
     pub_date = models.DateTimeField(
@@ -79,11 +79,11 @@ class Reviews(models.Model):
         ]
 
 
-class Comments(models.Model):
+class Comment(models.Model):
     author = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='comments')
     review = models.ForeignKey(
-        Reviews, on_delete=models.CASCADE, related_name='comments'
+        Review, on_delete=models.CASCADE, related_name='comments'
     )
     text = models.TextField()
     pub_date = models.DateTimeField(
