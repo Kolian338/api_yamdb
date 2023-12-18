@@ -42,7 +42,7 @@ class BaseViewSetFromGenresCategories(mixins.ListModelMixin,
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
+    queryset = Title.objects.order_by('id')
     permission_classes = (IsAdminOrReadOnly,)
     serializer_class = TitlesSerializer
     pagination_class = PageNumberPagination
@@ -58,12 +58,12 @@ class TitlesViewSet(viewsets.ModelViewSet):
 
 
 class CategoriesViewSet(BaseViewSetFromGenresCategories):
-    queryset = Categories.objects.all()
+    queryset = Categories.objects.order_by('id')
     serializer_class = CategoriesSerializer
 
 
 class GenresViewSet(BaseViewSetFromGenresCategories):
-    queryset = Genre.objects.all()
+    queryset = Genre.objects.order_by('id')
     serializer_class = GenresSerializer
 
 
@@ -93,7 +93,7 @@ class UserViewSet(viewsets.ModelViewSet):
     Вьюсет для пользователя.
     """
 
-    queryset = User.objects.all()
+    queryset = User.objects.order_by('id')
     serializer_class = UserSerializer
     lookup_field = 'username'
     permission_classes = (IsAdminOrSuperUser,)
