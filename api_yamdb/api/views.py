@@ -1,6 +1,7 @@
 import datetime as dt
 
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Avg
 from rest_framework import status, viewsets, mixins, filters
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
@@ -20,13 +21,12 @@ from api.serializers import (TitlesSerializer,
                              TokenSerializer,
                              UserSerializer,
                              ReviewSerializer,
-                             CommentSerializer
-                             )
+                             CommentSerializer)
 from reviews.models import (Title,
                             Categories,
                             Genre,
-                            User,
                             Review)
+from users.models import User
 from api.filters import GanreFilter
 
 
@@ -42,7 +42,7 @@ class BaseViewSetFromGenresCategories(mixins.ListModelMixin,
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
+    queryset = Title.objects.order_by('id')
     permission_classes = (IsAdminOrReadOnly,)
     serializer_class = TitlesSerializer
     pagination_class = PageNumberPagination
@@ -56,14 +56,19 @@ class TitlesViewSet(viewsets.ModelViewSet):
             return TitlesListSerializer
         return super().get_serializer_class()
 
+    def get_queryset(self):
+        return Title.objects.annotate(
+            rating=Avg('reviews__score')
+        ).order_by('id')
+
 
 class CategoriesViewSet(BaseViewSetFromGenresCategories):
-    queryset = Categories.objects.all()
+    queryset = Categories.objects.order_by('id')
     serializer_class = CategoriesSerializer
 
 
 class GenresViewSet(BaseViewSetFromGenresCategories):
-    queryset = Genre.objects.all()
+    queryset = Genre.objects.order_by('id')
     serializer_class = GenresSerializer
 
 
@@ -72,10 +77,9 @@ class SignupAPIView(APIView):
 
     def post(self, request):
         serializer = SignupSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class TokenAPIView(APIView):
@@ -83,9 +87,9 @@ class TokenAPIView(APIView):
 
     def post(self, request):
         serializer = TokenSerializer(data=request.data)
-        if serializer.is_valid():
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -93,7 +97,7 @@ class UserViewSet(viewsets.ModelViewSet):
     Вьюсет для пользователя.
     """
 
-    queryset = User.objects.all()
+    queryset = User.objects.order_by('id')
     serializer_class = UserSerializer
     lookup_field = 'username'
     permission_classes = (IsAdminOrSuperUser,)

@@ -150,6 +150,6 @@ media/
 static/
 .static/
 *.static/
-.management/
-*.management/
+#.management/
+#*.management/
 
