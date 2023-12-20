@@ -11,7 +11,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.permissions import (
-    IsAdminOrReadOnly, IsAdminOrSuperUser, IsAdminModeratorOrAuthenticatedUser
+    IsAdminOrReadOnly, IsAdmin, IsSuperUser,
+    IsAdminModeratorOrAuthenticatedUser
 )
 from api.serializers import (TitlesSerializer,
                              TitlesListSerializer,
@@ -100,7 +101,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.order_by('id')
     serializer_class = UserSerializer
     lookup_field = 'username'
-    permission_classes = (IsAdminOrSuperUser,)
+    permission_classes = (IsAdmin | IsSuperUser,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
     http_method_names = ['get', 'post', 'patch', 'delete']
