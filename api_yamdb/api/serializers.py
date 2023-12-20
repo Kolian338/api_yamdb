@@ -59,13 +59,13 @@ class BaseTilesSerializer(serializers.ModelSerializer):
         if value > current_year:
             raise serializers.ValidationError('Год выпуска произведения должен'
                                               ' быть не больше текущего года')
-        return value
+        return super().validate(value)
 
     def validate_name(self, value):
         if len(value) > 256:
             raise serializers.ValidationError('Наименование произведения не '
                                               'должно превышать 256 символов')
-        return value
+        return super().validate(value)
 
 
 class TitlesListSerializer(BaseTilesSerializer):
