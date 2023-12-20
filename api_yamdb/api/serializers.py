@@ -72,12 +72,6 @@ class TitlesListSerializer(BaseTilesSerializer):
     genre = GenresSerializer(many=True, read_only=True)
     category = CategoriesSerializer(read_only=True)
 
-    def create(self, validated_data):
-        return super().create(validated_data)
-    
-    def update(self, instance, validated_data):
-        return super().update(instance, validated_data)
-
 
 class TitlesSerializer(BaseTilesSerializer):
     genre = serializers.SlugRelatedField(queryset=Genre.objects.all(),
@@ -87,31 +81,10 @@ class TitlesSerializer(BaseTilesSerializer):
                                             slug_field='slug')
 
     def create(self, validated_data):
-        #genre_list = validated_data.pop('genre')
-        #validated_data.pop('genre')
         return super().create(validated_data)
-
-        # title_obj = Title(**validated_data)
-        # title_obj.save()
-        # title_obj.genre.set(genre_list)
-        # return title_obj
 
     def update(self, instance, validated_data):
         return super().update(instance, validated_data)
-        # category = validated_data.get('category', instance.category)
-        # ganres = validated_data.get('genre')
-        # name = validated_data.get('name', instance.name)
-        # year = validated_data.get('year', instance.year)
-        # description = validated_data.get('description', instance.description)
-        # instance.name = name
-        # instance.year = year
-        # instance.description = description
-        # instance.category = category
-        # instance.name = name
-        # instance.save()
-        # if ganres:
-        #     instance.genre.set(ganres)
-        return instance
 
 
 class SignupSerializer(serializers.Serializer):
