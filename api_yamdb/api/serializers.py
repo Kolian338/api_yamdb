@@ -43,13 +43,15 @@ class BaseTilesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Title
-        fields = ('id',
-                  'name',
-                  'year',
-                  'rating',
-                  'description',
-                  'genre',
-                  'category')
+        fields = (
+            'id',
+            'name',
+            'year',
+            'rating',
+            'description',
+            'genre',
+            'category'
+        )
 
     def validate_year(self, value):
         current_year = datetime.datetime.now().year
@@ -74,11 +76,15 @@ class TitlesListSerializer(BaseTilesSerializer):
 
 
 class TitlesSerializer(BaseTilesSerializer):
-    genre = serializers.SlugRelatedField(queryset=Genre.objects.all(),
-                                         slug_field='slug',
-                                         many=True)
-    category = serializers.SlugRelatedField(queryset=Categories.objects.all(),
-                                            slug_field='slug')
+    genre = serializers.SlugRelatedField(
+        queryset=Genre.objects.all(),
+        slug_field='slug',
+        many=True
+    )
+    category = serializers.SlugRelatedField(
+        queryset=Categories.objects.all(),
+        slug_field='slug'
+    )
 
 
 class SignupSerializer(serializers.Serializer):
@@ -120,13 +126,11 @@ class SignupSerializer(serializers.Serializer):
         username = validated_data.get('username')
         email = validated_data.get('email')
 
-        if User.objects.filter(username=username, email=email).exists():
-            user = User.objects.get(username=username, email=email)
-            send_code_to_email(user.password, email)
-            return user
-
-        validated_data['password'] = random.randint(0000, 9999)
-        user = User.objects.create(**validated_data)
+        user, created = User.objects.get_or_create(
+            username=username,
+            email=email,
+            defaults={'password': random.randint(0000, 9999)}
+        )
         send_code_to_email(user.password, email)
         return user
 

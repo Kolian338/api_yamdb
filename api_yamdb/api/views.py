@@ -43,9 +43,7 @@ class BaseViewSetFromGenresCategories(mixins.ListModelMixin,
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.order_by('id')
     permission_classes = (IsAdmin | ReadOnly,)
-    serializer_class = TitlesSerializer
     pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = GanreFilter
@@ -55,7 +53,7 @@ class TitlesViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
             return TitlesListSerializer
-        return super().get_serializer_class()
+        return TitlesSerializer
 
     def get_queryset(self):
         return Title.objects.annotate(

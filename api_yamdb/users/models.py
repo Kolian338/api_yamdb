@@ -5,9 +5,9 @@ from django.utils.translation import gettext_lazy as _
 
 class User(AbstractUser):
     class UserRoles(models.TextChoices):
-        ADMIN = "admin", _("Администратор")
-        MODERATOR = "moderator", _("Модератор")
-        USER = "user", _("Пользователь")
+        ADMIN = 'admin', _('Администратор')
+        MODERATOR = 'moderator', _('Модератор')
+        USER = 'user', _('Пользователь')
 
     email = models.EmailField('Почта', unique=True, max_length=254)
     bio = models.TextField('Биография', blank=True, null=True)
