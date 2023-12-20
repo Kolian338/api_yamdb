@@ -1,6 +1,7 @@
 import datetime as dt
 
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Avg
 from rest_framework import status, viewsets, mixins, filters
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
@@ -10,7 +11,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.permissions import (
-    IsAdminOrReadOnly, IsAdminOrSuperUser, IsAdminModeratorOrAuthenticatedUser
+    IsAdmin, IsSuperUser,
+    IsAuthenticatedUser, IsModerator, ReadOnly
 )
 from api.serializers import (TitlesSerializer,
                              TitlesListSerializer,
@@ -20,13 +22,12 @@ from api.serializers import (TitlesSerializer,
                              TokenSerializer,
                              UserSerializer,
                              ReviewSerializer,
-                             CommentSerializer
-                             )
+                             CommentSerializer)
 from reviews.models import (Title,
                             Categories,
                             Genre,
-                            User,
                             Review)
+from users.models import User
 from api.filters import GanreFilter
 
 
@@ -34,7 +35,7 @@ class BaseViewSetFromGenresCategories(mixins.ListModelMixin,
                                       mixins.CreateModelMixin,
                                       mixins.DestroyModelMixin,
                                       viewsets.GenericViewSet):
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdmin | ReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     pagination_class = PageNumberPagination
@@ -43,7 +44,7 @@ class BaseViewSetFromGenresCategories(mixins.ListModelMixin,
 
 class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.order_by('id')
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdmin | ReadOnly,)
     serializer_class = TitlesSerializer
     pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend,)
@@ -55,6 +56,11 @@ class TitlesViewSet(viewsets.ModelViewSet):
         if self.action in ('list', 'retrieve'):
             return TitlesListSerializer
         return super().get_serializer_class()
+
+    def get_queryset(self):
+        return Title.objects.annotate(
+            rating=Avg('reviews__score')
+        ).order_by('id')
 
 
 class CategoriesViewSet(BaseViewSetFromGenresCategories):
@@ -72,10 +78,9 @@ class SignupAPIView(APIView):
 
     def post(self, request):
         serializer = SignupSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class TokenAPIView(APIView):
@@ -83,9 +88,8 @@ class TokenAPIView(APIView):
 
     def post(self, request):
         serializer = TokenSerializer(data=request.data)
-        if serializer.is_valid():
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -96,7 +100,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.order_by('id')
     serializer_class = UserSerializer
     lookup_field = 'username'
-    permission_classes = (IsAdminOrSuperUser,)
+    permission_classes = (IsAdmin | IsSuperUser,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
     http_method_names = ['get', 'post', 'patch', 'delete']
@@ -125,7 +129,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (IsAdminModeratorOrAuthenticatedUser,)
+    permission_classes = (IsAuthenticatedUser | IsModerator | IsAdmin,)
     http_method_names = ['get', 'post', 'head', 'patch', 'delete']
 
     def get_title(self):
@@ -144,7 +148,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = (IsAdminModeratorOrAuthenticatedUser,)
+    permission_classes = (IsAuthenticatedUser | IsModerator | IsAdmin,)
     http_method_names = ['get', 'post', 'head', 'patch', 'delete']
 
     def get_review(self):

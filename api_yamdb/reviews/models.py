@@ -1,24 +1,7 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 
-CHOICES = (
-    ('admin', 'Администратор'),
-    ('moderator', 'Модератор'),
-    ('user', 'Пользователь'),
-)
-
-
-class User(AbstractUser):
-    email = models.EmailField('Почта', unique=True, max_length=254)
-    bio = models.TextField('Биография', blank=True, null=True)
-    role = models.CharField(
-        'Роль',
-        max_length=20, choices=CHOICES, default=CHOICES[2][0]
-    )
-
-    def __str__(self):
-        return self.username
+from users.models import User
 
 
 class Categories(models.Model):
