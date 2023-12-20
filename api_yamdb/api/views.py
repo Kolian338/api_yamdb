@@ -11,8 +11,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.permissions import (
-    IsAdminOrReadOnly, IsAdmin, IsSuperUser,
-    IsAdminModeratorOrAuthenticatedUser
+    IsAdmin, IsSuperUser,
+    IsAuthenticatedUser, IsModerator, ReadOnly
 )
 from api.serializers import (TitlesSerializer,
                              TitlesListSerializer,
@@ -35,7 +35,7 @@ class BaseViewSetFromGenresCategories(mixins.ListModelMixin,
                                       mixins.CreateModelMixin,
                                       mixins.DestroyModelMixin,
                                       viewsets.GenericViewSet):
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdmin | ReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     pagination_class = PageNumberPagination
@@ -44,7 +44,7 @@ class BaseViewSetFromGenresCategories(mixins.ListModelMixin,
 
 class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.order_by('id')
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdmin | ReadOnly,)
     serializer_class = TitlesSerializer
     pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend,)
@@ -89,7 +89,6 @@ class TokenAPIView(APIView):
     def post(self, request):
         serializer = TokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -130,7 +129,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (IsAdminModeratorOrAuthenticatedUser,)
+    permission_classes = (IsAuthenticatedUser | IsModerator | IsAdmin,)
     http_method_names = ['get', 'post', 'head', 'patch', 'delete']
 
     def get_title(self):
@@ -149,7 +148,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = (IsAdminModeratorOrAuthenticatedUser,)
+    permission_classes = (IsAuthenticatedUser | IsModerator | IsAdmin,)
     http_method_names = ['get', 'post', 'head', 'patch', 'delete']
 
     def get_review(self):
