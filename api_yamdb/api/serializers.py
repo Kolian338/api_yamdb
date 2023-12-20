@@ -59,13 +59,13 @@ class BaseTilesSerializer(serializers.ModelSerializer):
         if value > current_year:
             raise serializers.ValidationError('Год выпуска произведения должен'
                                               ' быть не больше текущего года')
-        return value
+        return super().validate(value)
 
     def validate_name(self, value):
         if len(value) > 256:
             raise serializers.ValidationError('Наименование произведения не '
                                               'должно превышать 256 символов')
-        return value
+        return super().validate(value)
 
 
 class TitlesListSerializer(BaseTilesSerializer):
@@ -81,27 +81,10 @@ class TitlesSerializer(BaseTilesSerializer):
                                             slug_field='slug')
 
     def create(self, validated_data):
-        genre_list = validated_data.pop('genre')
-        title_obj = Title(**validated_data)
-        title_obj.save()
-        title_obj.genre.set(genre_list)
-        return title_obj
+        return super().create(validated_data)
 
     def update(self, instance, validated_data):
-        category = validated_data.get('category', instance.category)
-        ganres = validated_data.get('genre')
-        name = validated_data.get('name', instance.name)
-        year = validated_data.get('year', instance.year)
-        description = validated_data.get('description', instance.description)
-        instance.name = name
-        instance.year = year
-        instance.description = description
-        instance.category = category
-        instance.name = name
-        instance.save()
-        if ganres:
-            instance.genre.set(ganres)
-        return instance
+        return super().update(instance, validated_data)
 
 
 class SignupSerializer(serializers.Serializer):
