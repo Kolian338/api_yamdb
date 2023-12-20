@@ -1,18 +1,19 @@
 import random
 import datetime
-import statistics
 
-
+from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
 
 from api.utils import send_code_to_email, get_tokens_for_user
-from reviews.models import (User,
-                            Review,
-                            Comment,
-                            Categories,
-                            Genre,
-                            Title)
+from reviews.models import (
+    Review,
+    Comment,
+    Categories,
+    Genre,
+    Title
+)
+from users.models import User
 
 
 class AuthorMixin(metaclass=serializers.SerializerMetaclass):
@@ -38,7 +39,7 @@ class CategoriesSerializer(serializers.ModelSerializer):
 
 
 class BaseTilesSerializer(serializers.ModelSerializer):
-    rating = serializers.SerializerMethodField(read_only=True)
+    rating = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Title
@@ -50,28 +51,21 @@ class BaseTilesSerializer(serializers.ModelSerializer):
                   'genre',
                   'category')
 
-    def validate(self, data):
-        year = data.get('year', datetime.datetime.now().year)
-        name = data.get('name')
+    def validate_year(self, value):
         current_year = datetime.datetime.now().year
-        if not isinstance(year, int):
+        if not isinstance(value, int):
             raise serializers.ValidationError('Проверьте формат года '
                                               'выпуска произведения')
-        if year > current_year:
+        if value > current_year:
             raise serializers.ValidationError('Год выпуска произведения должен'
                                               ' быть не больше текущего года')
-        if len(name) > 256:
+        return value
+
+    def validate_name(self, value):
+        if len(value) > 256:
             raise serializers.ValidationError('Наименование произведения не '
                                               'должно превышать 256 символов')
-        return data
-
-    def get_rating(self, obj):
-        list_raiting = obj.reviews.all().values_list('score', flat=True)
-        try:
-            raiting = statistics.mean(list_raiting)
-        except statistics.StatisticsError:
-            return None
-        return round(raiting, 0)
+        return value
 
 
 class TitlesListSerializer(BaseTilesSerializer):
@@ -133,14 +127,12 @@ class SignupSerializer(serializers.Serializer):
         if User.objects.filter(username=username, email=email).exists():
             return data
 
-        if User.objects.filter(email=email).exists():
+        if User.objects.filter(
+            Q(username=username) | Q(email=email)
+        ).exists():
             raise serializers.ValidationError(
-                'Такая почта уже используется'
+                'Такая почта или username уже используются'
             )
-
-        if User.objects.filter(username=username).exists():
-            raise serializers.ValidationError(
-                'Такой username уже используется')
 
         return data
 
@@ -181,12 +173,12 @@ class TokenSerializer(serializers.Serializer):
 
     def validate(self, data):
         """
-        Если переданный код(пароль) неверный выбрасывается ошибка валидации.
+        Если переданный пароль неверный выбрасывается ошибка валидации.
         """
         username = data.get('username')
 
         if data.get('password') != self.get_user(username).password:
-            raise serializers.ValidationError('Не верный код!')
+            raise serializers.ValidationError('Не верный пароль!')
         return data
 
     def to_representation(self, value):
