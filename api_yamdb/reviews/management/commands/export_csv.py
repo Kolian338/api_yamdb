@@ -9,11 +9,11 @@ from django.core.exceptions import ObjectDoesNotExist
 
 DictFileModel = {
     'category.csv': 'Categories',
-    'comments.csv': 'Comments',
+    'comments.csv': 'Comment',
     'genre_title.csv': 'GenreTitles',
-    'genre.csv': 'Genres',
-    'review.csv': 'Reviews',
-    'titles.csv': 'Titles',
+    'genre.csv': 'Genre',
+    'review.csv': 'Review',
+    'titles.csv': 'Title',
     'users.csv': 'User'
 }
 
@@ -34,7 +34,9 @@ def LoadRow(reader,
                     #print(f'object_model3 {object_model._meta.get_field(subo_model.get(i)).related_model}')
                     #print(f'Зашли в subo_model {subo_model[i]}')
                     try:
-                        obj_subo_model = object_model._meta.get_field(subo_model.get(i)).related_model
+                        obj_subo_model = (object_model.
+                                          _meta.get_field(subo_model.get(i)).
+                                          related_model)
                         #obj_subo_model2 = object_model._meta.get_field(subo_model.get(i))
                         #obj_subo_model3 = obj_subo_model2.related_model.objects.all()
                         #obj_subo_model4 = obj_subo_model2.related_model.objects.filter(id=field)
@@ -46,8 +48,9 @@ def LoadRow(reader,
                         try:
                             obj = obj_subo_model.objects.get(id=field)
                             print(f'Что получили {obj}')
-                        except obj_subo_model.DoesNotExist:
-                            print(obj_subo_model)
+                        except ObjectDoesNotExist:
+                            raise (f'Не удалось получить '
+                                   f'объект {obj} с id {field}')
                         #print(f'Объект subo_model4 {obj_subo_model4}')
                         #print(f'Объект subo_model5 {obj_subo_model5}')
                         #field = obj_subo_model3.objects.get(pk=field)
@@ -58,6 +61,7 @@ def LoadRow(reader,
                         raise (f'Не удалось получить '
                                f'объект {obj_subo_model} с id {field}')
                     setattr(object_model, fields_name[i], field)
+                    print(f'Откуда хотим получить {obj_subo_model}')
             object_model.save()
         except Exception as err:
             print(err)
@@ -88,7 +92,7 @@ class Command(BaseCommand):
         parser.add_argument('catalog', type=str)
 
     def handle(self, *args, **options):
-        files = [f for f in glob.glob(options['catalog'] + '**/*.csv',
+        files = [f for f in glob.glob(options['catalog'] + '/*.csv',
                                       recursive=True)]
         for file in files:
             filename = os.path.basename(file)
