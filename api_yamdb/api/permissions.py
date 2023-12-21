@@ -17,9 +17,11 @@ class IsAdmin(BasePermission):
         return request.user.is_authenticated and request.user.role == 'admin'
 
     def has_object_permission(self, request, view, obj):
-        return (request.method in SAFE_METHODS
-                or request.user.is_authenticated
-                and request.user.role == 'admin')
+        return (
+            request.method in SAFE_METHODS
+            or request.user.is_authenticated
+            and request.user.role == 'admin'
+        )
 
 
 class IsSuperUser(BasePermission):
@@ -33,13 +35,16 @@ class IsSuperUser(BasePermission):
 
 class IsAuthenticatedUser(BasePermission):
     def has_permission(self, request, view):
-        return (request.method in SAFE_METHODS
-                or request.user.is_authenticated
-                )
+        return (
+            request.method in SAFE_METHODS
+            or request.user.is_authenticated
+        )
 
     def has_object_permission(self, request, view, obj):
-        return (request.method in SAFE_METHODS
-                or obj.author == request.user)
+        return (
+            request.method in SAFE_METHODS
+            or obj.author == request.user
+        )
 
 
 class IsModerator(BasePermission):
@@ -54,4 +59,4 @@ class IsAnonymous(BasePermission):
     """Разрешено только чтение анониму."""
 
     def has_permission(self, request, view):
-        return not request.auth and request.method in SAFE_METHODS
+        return request.user.is_anonymous and request.method in SAFE_METHODS
