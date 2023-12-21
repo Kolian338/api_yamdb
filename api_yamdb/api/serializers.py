@@ -61,13 +61,13 @@ class BaseTilesSerializer(serializers.ModelSerializer):
         if value > current_year:
             raise serializers.ValidationError('Год выпуска произведения должен'
                                               ' быть не больше текущего года')
-        return super().validate(value)
+        return value
 
     def validate_name(self, value):
         if len(value) > 256:
             raise serializers.ValidationError('Наименование произведения не '
                                               'должно превышать 256 символов')
-        return super().validate(value)
+        return value
 
 
 class TitlesListSerializer(BaseTilesSerializer):
@@ -108,7 +108,7 @@ class SignupSerializer(serializers.Serializer):
         username = data.get('username')
 
         if User.objects.filter(username=username, email=email).exists():
-            return data
+            return super().validate(data)
 
         if User.objects.filter(
             Q(username=username) | Q(email=email)
@@ -117,7 +117,7 @@ class SignupSerializer(serializers.Serializer):
                 'Такая почта или username уже используются'
             )
 
-        return data
+        return super().validate(data)
 
     def create(self, validated_data):
         """
@@ -160,7 +160,7 @@ class TokenSerializer(serializers.Serializer):
 
         if data.get('password') != self.get_user(username).password:
             raise serializers.ValidationError('Не верный пароль!')
-        return data
+        return super().validate(data)
 
     def to_representation(self, value):
         return {
@@ -198,14 +198,14 @@ class ReviewSerializer(AuthorMixin, serializers.ModelSerializer):
 
     def validate(self, data):
         if self.context.get('request').method != 'POST':
-            return data
+            return super().validate(data)
         author = self.context.get('request').user
         title_id = self.context.get('view').kwargs.get('title_id')
         if Review.objects.filter(author=author, title=title_id).exists():
             raise serializers.ValidationError(
                 'Repeated reviews are not allowed'
             )
-        return data
+        return super().validate(data)
 
 
 class CommentSerializer(AuthorMixin, serializers.ModelSerializer):

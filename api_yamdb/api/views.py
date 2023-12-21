@@ -56,9 +56,12 @@ class TitlesViewSet(viewsets.ModelViewSet):
         return TitlesSerializer
 
     def get_queryset(self):
-        return Title.objects.annotate(
-            rating=Avg('reviews__score')
-        ).order_by('id')
+        return (
+            Title
+            .objects
+            .annotate(rating=Avg('reviews__score'))
+            .order_by('id')
+        )
 
 
 class CategoriesViewSet(BaseViewSetFromGenresCategories):
@@ -104,25 +107,28 @@ class UserViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
 
     @action(
-        methods=['get', 'patch'], detail=False,
+        methods=['get'], detail=False,
         permission_classes=(IsAuthenticated,),
         url_path='me',
     )
     def me(self, request):
-        """Создает маршрут /me и действие для него."""
-        if request.method == 'PATCH':
-            serializer = UserSerializer(
-                request.user, data=request.data, partial=True
-            )
-            if serializer.is_valid():
-                serializer.save(role=serializer.instance.role)
-                return Response(
-                    serializer.data, status=status.HTTP_200_OK)
-            return Response(
-                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        """Создает маршрут /me"""
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
+
+    @me.mapping.patch
+    def patch_me(self, request):
+        serializer = UserSerializer(
+            request.user, data=request.data, partial=True
+        )
+        if serializer.is_valid():
+            serializer.save(role=serializer.instance.role)
+            return Response(
+                serializer.data, status=status.HTTP_200_OK
+            )
+        return Response(
+            serializer.errors, status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
